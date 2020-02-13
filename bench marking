@@ -6,10 +6,9 @@ When started analyzing this requirement, I was thinking in two ways to achieve t
 -	Creating a heap table with an index on inc_date.
 -	Creating index cluster table based on inc_date.
 To decide which way is better, I did the following benchmarking:
-
-This benchmarking shows that the logical reads in the index clustering table almost the half of the heap table with index.
+In the first query I used the heap table to get the required data: 
 select * from incident where trunc(inc_date)=trunc(sysdate)
-
+And this the execution plan for this query: 
 Execution Plan
 ----------------------------------------------------------
 Plan hash value: 367380534
@@ -58,7 +57,7 @@ Statistics
 
 
 
-
+Then I used the clustered table 
 select * from incident_cls where (inc_date>=sysdate and inc_date<sysdate+1)
 Execution Plan
 ----------------------------------------------------------
@@ -109,4 +108,10 @@ Statistics
 	  0  sorts (memory)
 	  0  sorts (disk)
        1000  rows processed
+ We need to check the consistent gets to decide 
+Which execution plan is more efficient: 
+- the heap table shows 145 consistent gets
+- the clustered table shows 75 consistent gets 
+This result shows the performance of using clustered 
+Table almost the half of using heap table 
 
