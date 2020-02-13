@@ -111,7 +111,7 @@ Statistics
  We need to check the consistent gets to decide 
 Which execution plan is more efficient: 
 - the heap table shows 145 consistent gets
-- the clustered table shows 75 consistent gets 
-This result shows the performance of using clustered 
-Table almost the half of using heap table 
+- the clustered table shows 75 consistent gets
+This means by using table clustering in this case
+We got improving in performance, almost the double 
 
