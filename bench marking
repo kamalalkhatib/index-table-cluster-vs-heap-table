@@ -1,0 +1,112 @@
+One of the main requirements when I was working on crises management applications 
+was creating a report every morning to show all incidents that happened in the previous day. 
+Most of those requirements found in the incident table:
+Inc_id,Inc_type,inc_date,inj_no,death_no…etc.
+When started analyzing this requirement, I was thinking in two ways to achieve the best peroformance for this requirement:
+-	Creating a heap table with an index on inc_date.
+-	Creating index cluster table based on inc_date.
+To decide which way is better, I did the following benchmarking:
+
+This benchmarking shows that the logical reads in the index clustering table almost the half of the heap table with index.
+select * from incident where trunc(inc_date)=trunc(sysdate)
+
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 367380534
+
+--------------------------------------------------------------------------------
+--------------------
+
+| Id  | Operation			    | Name	   | Rows  | Bytes | Cos
+t (%CPU)| Time	   |
+
+--------------------------------------------------------------------------------
+--------------------
+
+|   0 | SELECT STATEMENT		    |		   |  1000 | 30000 |
+10   (0)| 00:00:01 |
+
+|   1 |  TABLE ACCESS BY INDEX ROWID BATCHED| INCIDENT	   |  1000 | 30000 |
+10   (0)| 00:00:01 |
+
+|*  2 |   INDEX RANGE SCAN		    | INC_DATE_IDX |  1000 |	   |
+ 5   (0)| 00:00:01 |
+
+--------------------------------------------------------------------------------
+--------------------
+
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   2 - access(TRUNC(INTERNAL_FUNCTION("INC_DATE"))=TRUNC(SYSDATE@!))
+
+
+Statistics
+----------------------------------------------------------
+	  0  recursive calls
+	  0  db block gets
+	145  consistent gets
+	  7  physical reads
+	  0  redo size
+      26480  bytes sent via SQL*Net to client
+       1277  bytes received via SQL*Net from client
+	 68  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+       1000  rows processed
+
+
+
+
+select * from incident_cls where (inc_date>=sysdate and inc_date<sysdate+1)
+Execution Plan
+----------------------------------------------------------
+Plan hash value: 1414979339
+
+--------------------------------------------------------------------------------
+------
+
+| Id  | Operation	      | Name	     | Rows  | Bytes | Cost (%CPU)| Time
+     |
+
+--------------------------------------------------------------------------------
+------
+
+|   0 | SELECT STATEMENT      | 	     |	1912 | 42064 |	   6   (0)| 00:0
+0:01 |
+
+|*  1 |  FILTER 	      | 	     |	     |	     |		  |
+     |
+
+|   2 |   TABLE ACCESS CLUSTER| INCIDENT_CLS |	1912 | 42064 |	   6   (0)| 00:0
+0:01 |
+
+|*  3 |    INDEX RANGE SCAN   | INC_CLS_IDX  |	   1 |	     |	   2   (0)| 00:0
+0:01 |
+
+--------------------------------------------------------------------------------
+------
+
+
+Predicate Information (identified by operation id):
+---------------------------------------------------
+
+   1 - filter(SYSDATE@!+1>SYSDATE@!)
+   3 - access("INC_DATE">=SYSDATE@! AND "INC_DATE"<SYSDATE@!+1)
+
+
+Statistics
+----------------------------------------------------------
+	  0  recursive calls
+	  0  db block gets
+	 75  consistent gets
+	  0  physical reads
+	  0  redo size
+      26480  bytes sent via SQL*Net to client
+       1277  bytes received via SQL*Net from client
+	 68  SQL*Net roundtrips to/from client
+	  0  sorts (memory)
+	  0  sorts (disk)
+       1000  rows processed
+
