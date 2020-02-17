@@ -112,6 +112,5 @@ Statistics
 Which execution plan is more efficient: 
 - the heap table shows 145 consistent gets
 - the clustered table shows 75 consistent gets
-This means,  by using table clustering for this case
-We got considerable improvement in performance 
-
+This means, using index cluster table saves the half of
+resources that are consumed by using the heap table.
